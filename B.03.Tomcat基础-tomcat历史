@@ -1,0 +1,10 @@
+Tomcat的历史
+ 
+1. Tomcat最初是由Sun公司的软件架构师 James Duncan Davidson 开发，名称为 “JavaWebServer”.
+2. 1999年，在Davidson的帮助下，该项目于1999年与apache软件基金会旗下的JServ项目合并，并发布第一个版本（3.x）,即是现在的Tomcat,
+   该版本实现了Servlet2.2 和 JSP 1.1 规范。
+3. 2001年，Tomcat发布了4.0 版本，作为里程碑式的版本，Tomcat完全重新设计了其架构，并实现了Servle2.3 和 JSP1.2规范。
+
+目前，Tomcat已经更新到了9.x.x版本，但本课程是基于 8.5 版本进行讲解。
+
+对于历史，纯属了解即可，没事儿多浏览浏览官网上面的信息，学学英语也好。
