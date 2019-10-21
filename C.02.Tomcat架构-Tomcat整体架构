@@ -11,5 +11,26 @@
       
       
 2.Servlet容器的工作流程
-  为了解耦，HTTP服务器不直接调用servlet，而是把请求交给servlet容器进行处理。那么servlet容器又是
-  2.1 
+  为了解耦，HTTP服务器不直接调用servlet，而是把请求交给servlet容器进行处理。那么servlet容器又是怎样工作的呢?
+  2.1 当客户请求某个资源时，HTTP服务器会用一个ServletRequest对象把客户的请求信息封装起来，
+  2.2 调用servlet容器的service方法：
+      2.2.1 servlet容器拿到请求后，根据请求的url和servlet的映射关系，找到相应的servlet;
+      2.2.2 如果servlet还没有被加载，就用反射机制创建这个servlet，并调用servlet的init方法来完成初始化
+      2.2.3 然后调用servlet的service方法来处理请求
+  2.3 把servletResponse对象返回给HTTP服务器，HTTP服务器会把相应发送给客户端。
+  
+  因此servlet容器的工作内容主要有三个 ：
+      定位 servlet；
+      加载 servlet；
+      调用 service；
+      
+      
+ 3.Tomcat整体架构
+   我们知道，如果要设计一个系统，首先是要了解需求，我们已经了解了Tomcat要实现的两个核心功能 ： 
+   3.1 处理socket连接，负责网络字节流与request和response对象的转化；
+   3.2 加载和管理servlet，以及具体处理request请求。
+   
+   因此，Tomcat设计了两个核心组件  ： 连接器（Connector）和容器（Container）来分别做这两件事情。
+   连接器负责对外交流；
+   容器负责内部处理。
+      
