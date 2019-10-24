@@ -1,0 +1,12 @@
+步骤如下 ：
+ 
+  1.Connector组件Endpoint中的Acceptor监听客户端套接字连接并接受Socket;
+  2.将连接交给线程池Executor处理，开始执行请求响应任务;
+  3.Processor组件读取消息报文，解析请求行、请求头、请求提、封装成Request对象；
+  4.Mapper组件根据请求行的URL值和请求头的Host值匹配由哪个Host容器，Context容器，Wrapper容器处理请求；
+  5.CoyoteAdaptor组件负责Connector组件和Engine容器关联起来，把生成的request对象和相应对象response传递到Engine容器中，调用Pipeline；
+  6.Engine容器的管道开始处理，管道中包含若干个value，每个value负责部分处理逻辑，执行完value后悔执行基础的ValueStandardEngineValue，
+    负责调用Host容器的Pipeline；
+  7.Host容器的管道开始处理，流程类似，最后执行context容器的Pipeline；
+  8.Context容器的管道开始处理，流程类似，最后执行Wrapper容器的Pipeline；
+  9.Wrapper容器的管道开始处理，流程类似，最后执行Wrapper容器对应的servlet对象的处理方法。
