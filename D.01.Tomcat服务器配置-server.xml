@@ -102,6 +102,57 @@ server.xml 是Tomcat的核心配置文件 ：
          APR (HTTP/AJP) Connector: /docs/apr.html
          Define a non-SSL/TLS HTTP/1.1 Connector on port 8080
     -->
+    #Connector 用于创建链接实例
+    #默认情况下 server.xml 配置了两个链接器，一个支持HTTP协议，一个支持AJP协议。
+    #因此大多数情况下，我们并不需要新增链接器配置，只是根据需要对已有链接器进行优化。
+    #属性说明 ：
+    #        port : 端口号，Connector用于创建服务端Socket并进行监听，以等待客户端请求连接。
+                    如果该属性设置为0，Tomcat将会随机选择一个可用的端口号给当前Connector用。
+    #        protocol : 当前Connector支持的访问协议。默认为HTTP/1.1，并采用自动切换机制选择一个基于JAVA NIO 的链接器
+                        或者基于本地APR的链接器（根据本地是否含有Tomcat的本地库判定）。
+                        如果不希望采用上述自动切换的机制，而是明确指定协议，可以使用以下值 ：
+                        Http协议的 ：
+                            org.apache.coyote.http11.Http11NioProtocol 非阻塞式 java nio 链接器
+                            org.apache.coyote.http11.Http11Nio2Protocol 非阻塞式 java nio2 链接器
+                            org.apache.coyote.http11.Http11AprProtocol  APR 链接器
+                        AJP协议的 ：
+                            org.apache.coyote.ajp.AjpNioProtocol 非阻塞式 java nio 链接器
+                            org.apache.coyote.ajp.AjpNio2Protocol 非阻塞式 java nio2 链接器
+                            org.apache.coyote.ajp.AjpAprProtocol  APR 链接器
+    #        connetionTimeOut : Connetor 接收链接后的等待超时时间，单位为毫秒，-1 表示不超时。
+    #        redirectPort : 当前Connector不支持SSL请求，接收到了一个请求，并且也符合security-constraint约束，需要SSL传输，
+                            Catalina自动将请求重定向到指定的端口。
+    #        executor : 指定共享线程池的名称，也可以通过maxThreads,minSpareThreads等属性配置内部线程池。
+    #        URIEncoding : 用于指定URIde字符编码，Tomcat8.x版本默认的编码为UTF-8.
+    
+    #完整配置如下 ：
+       <Connector port="8080"    绑定的端口,如果设置为0，tomcat则随机获取一个空闲端口
+                  protocol="HTTP/1.1"   传输协议和版本
+                  executor="tomcatThreadPool"
+                  maxThreads="1000"    tomcat能创建来处理请求的最大线程数，也为最大并发数 超过则放入请求队列中进行排队，默认值为200；
+                                       需要根据业务和系统性能进行调整整
+                  minSpareTheads="100" 最小空闲线程数，任何情况都会存活的线程数，即便超过了最大空闲时间，也不会被回收，默认值10;
+                  
+                  minProcess="50" 启动时创建的线程数（最小线程数）
+                  acceptCount="1000"  指定当所有可以使用的处理请求的线程数都被使用时，可以放到队列中的请求数，
+                                      就是被排队的请求数，超过这个数的请求将拒绝连接 默认值为100
+                  acceptorThreadCount="1"  可以用于接受连接的进程数，默认为1，
+                                           但是在一些多核的的服务器上，我们会将它的值设置为2或者更大的数，来应对一些不活跃的连接。
+                  maxConnections="1000"  在一定时间内可以接受和处理的最大连接数，达到限制后，服务器接受但不处理该链接，但可以存放到acceptCount，
+                                        该默认值因连接器类型而异。对于NIO和NIO2，默认值为10000。对于APR / native，默认为8192。
+                  connectionTimeout="20000"  连接超时时间，单位毫秒
+                  compression="on" 开启gzip 压缩，可以接受的值是 "off"(禁用压缩),"on"(开启压缩),"force(强制压缩)"，
+                                  "1-9"(等效于开启压缩，并且设定压缩等级),开启了压缩，也就意味着要占用更多的cpu资源
+                  compressionMinSize="2048" 在compression 参数指定为on后，该参数用来指定压缩的阈值，只有大于该阈值才会被压缩，默认为 2048
+                  disableUploadTimeout="true" 这个标志允许servlet容器使用一个不同的,通常长在数据上传连接超时。 如果不指定,这个属性被设置为true,表示禁用该时间超时。
+                  redirectPort="8443"  接收到的ssl请求后重定向的端口
+                  URIEncoding="UTF-8"  url的字符编码，在tomcat8.5版本中，该值默认为UTF-8,
+                                       除非在org.apache.catalina.STRICT_SERVLET_COMPLIANCE 将system property 设置为true才会使用ISO-8859-1
+                  />
+    
+    
+                            
+    
     <Connector port="8080" protocol="HTTP/1.1"
                connectionTimeout="20000"
                redirectPort="8443" />
@@ -161,6 +212,11 @@ server.xml 是Tomcat的核心配置文件 ：
     <!-- You should set jvmRoute to support load-balancing via AJP ie :
     <Engine name="Catalina" defaultHost="localhost" jvmRoute="jvm1">
     -->
+    
+    #Engine 作为servlet 引擎的顶级元素，内部可以嵌入 Cluster、Listener、Realm、Valve 和 Host。
+    #属性说明 ：
+    #        name : 用于指定Engine的名称，默认为Catalina。该名称会影响一部分Tomcat的存储路径（如临时文件）。
+    #        defaultHost　: 默认使用虚拟主机名称，当客户端请求只想的主机无效时，将交由默认的虚拟主机处理，默认为localhost。
     <Engine name="Catalina" defaultHost="localhost">
 
       <!--For clustering, please take a look at documentation at:
@@ -180,7 +236,16 @@ server.xml 是Tomcat的核心配置文件 ：
         <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
                resourceName="UserDatabase"/>
       </Realm>
-
+      
+      #Host元素用于配置一个虚拟主机，它支持以下嵌入元素 ： Alias、Cluster、Listener、Valve、Realm、Context。
+      #如果在Engine 下配置Realm，那么此项配置将在当前Engine下的所有Host中共享。
+      #同样，如果在Host中配置Realm,则在当前Host下的所有 Context中共享。
+      #Context中的Realm优先级 > Host的Realm的优先级 > Engine中的Realm的优先级
+      #属性说明 ：
+      #        name : 当前host通用的网络名称，必须与DNS服务器上的注册信息一致。Engine中半酣的Host必须存在一个名称与Engine的defaultHost设置一致。
+      #        appBase : 当前host的应用基础目录，打个年前host上部署的web应用均在该目录下（可以是绝对目录，相对路径）。默认为webapps.
+      #        unpackWARs : 设置为true，host会在启动时将appBase 目录下war包解压为目录。设置为false，host将从war文件直接启动。
+      #        autoDeploy : 控制tomcat是否在运行时定期检测并自动部署新增或变更的web应用。
       <Host name="localhost"  appBase="webapps"
             unpackWARs="true" autoDeploy="true">
 
@@ -189,6 +254,13 @@ server.xml 是Tomcat的核心配置文件 ：
         <!--
         <Valve className="org.apache.catalina.authenticator.SingleSignOn" />
         -->
+        
+        #Context 用于配置一个Web应用，默认的配置如下
+        #属性描述  ： 
+        #        docBase : web应用目录或者war包的部署路径，可以是绝对路径，也可以是相对于Host appBase的相对路径
+        #        path : web应用的context路径，如果我们host名为localhost,则该web应用访问的跟路径为 http://localhost:8080/myapp
+        #它支持的内嵌元素有 ： CookieProcessor,Loader,Manager,Realm,Resources,WatchedResource,JarScanner,Valve.
+        <Context docBase="d:\servlet_project03" path="/myapp"></Context>
 
         <!-- Access log processes all example.
              Documentation at: /docs/config/valve.html
