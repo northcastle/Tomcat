@@ -1,0 +1,74 @@
+web.xml 是web应用的描述文件，它支持的元素及属性来自于servlet规范定义。
+在tomcat中，web应用的描述信息包括 tomcat/conf/web.xml 中的默认配置，以及web应用中 WEB-INF/web.xml下的订制配置。
+
+
+1.初始化参数配置  : context-param , 可以直接在servlet中使用。
+    <context-param>
+      <param-name>Project_name</param-name>
+      <param-value>aaabbb</param-value>
+    </context-param>
+    
+    #使用 ： request.getServletContext().getInitParameter("Project_name");
+
+2.会话配置 session-config :
+  session-config 用于配置web应用会话，包括 超时时间、Cookie配置、以及会话追踪模式，它将覆盖server.xml 和 context.xml中的配置。
+  <session-config>
+      <session-timeout>30</session-timeout>  session 的有效期，默认30分钟
+      <cookie-config>  
+          <name>JESSIONID</name> 不建议修改
+          <domain>www.whc.com  localhost</domain>  域名
+          <path>/</path>
+          <comment>Session Cookie</comment>
+          <http-only>true</http-only>  这个cookie对象只能通过http请求携带过来，并不能通过js获取
+          <secure>false</secure> 如果设置为true，那么这个cookie只有https协议才可以携带
+          <max-age>3600</max-age> cookie 的有效期，3600分钟
+      </cookie-config>
+      <tracking-mod>COOKIE</tracking-mod> 跟踪模式 ： COOKIE URL  SSL
+  </session-config>
+  
+  #使用 ： request.getSession().getId();
+  
+  3.servlet配置 ： 两个部分 servlet的配置+servlet-mapping的配置
+  <servlet>
+    <servlet-name>myservlet</servlet-name>
+    <servlet-class>com.whc.project.servlet.demo01</servlet-class>
+    <init-param>
+        <param-name>filename</param-name>
+        <param-value>whc.doc</param-value>
+    </init-param>
+    <load-on-startup>1</load-on-startup> 加载顺序，默认（值小于0）为 启动时不加载，第一次访问时加载；0 或者大于0 在启动的时候就会加载
+    <enable>true</enable> 如果为false,当前servlet不会接收请求，即不可用
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>myservlet</servlet-name>
+    <url-pattern>*.do</url-pattern>
+    <url-pattern>/myservlet/*</url-pattern>
+  </servlet-mapping>
+  
+  
+  4.Listener配置 
+    Listener用于监听servlet中的事件，例如context,request,session对象的创建，修改，删除，并触发响应事件。
+    Listener是观察者模式的实现，在service中主要用于对context,request,session对象的生命周期进行监控。
+    在启动时，ServletContextListener 的执行顺序与web.xml 中的配置顺序一直，停止时执行顺序相反。
+    <listener>
+      <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    
+    
+    5.Filter配置
+      filter用于配置web应用过滤器，用来过滤资源请求及响应。经常用于认证、日志、加密、数据转换等操作。
+      <filter>
+        <filter-name>login</filter-name>
+        <filter-class>com.whc.project.loginfilter</filter-class>
+        <async-supported>true</async-supported> 是否支持异步
+        <init-param>
+          <param-name>username</param-name>
+          <param-value>aaaaaa</param-value>
+        </init-param>
+      </filter>
+      
+      <filter-mapping>
+        <filter-name>login</filter-name>
+        <url-pattern>/*</url-pattern>
+      </filter-mapping>
