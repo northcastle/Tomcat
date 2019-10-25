@@ -1,0 +1,18 @@
+常见的JVM配置当属内存配置，因为在绝大多数情况下，JVM默认分配的内存可能不能够满足我们的需求，特别是在生产环境，
+此时需要手动修改Tomcat启动时的内存参数分配。
+
+1.JVM配置选项
+  1.1 Windows平台 ： catalina.bat 
+      set JAVA_OPTS=-server -Xms2048m -Xmx2048m -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=256m -XX:SurvivorRatio=8
+  1.2 Linux平台 ： catalina.sh
+      JAVA_OPTS="-server -Xms1024m -Xmx2048m -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -XX:SurvivorRatio=8"
+      
+  1.3 参数说明 ：
+     1.3.1 -Xms : 堆内存的初始大小
+     1.3.2 -Xmx : 堆内存的最大大小
+     1.3.3 -Xmn : 新生代的内存大小，官方建议时占整个堆内存的3/8
+     1.3.4 -XX:MetaspaceSize : 元空间内存初始大小，在JDK1.8 之前配置为 -XX:PermSize(永久代)
+     1.3.5 -XX:MaxMetaspaceSize : 元空间内存最大大小，在JDK1.8 之前配置为 -XX:MaxPermSize(永久代)
+     1.3.6 -XX:InitialCodeCacheSize :  代码缓存区大小
+           -XX:ReservedCodeCacheSize : 
+     1.3.7 -XX:NewRatio : 设置新生代和老年代的相对大小比例。这种方式的优点是，新生代大小会随着整个队大小动态扩展。
