@@ -72,3 +72,26 @@ web.xml 是web应用的描述文件，它支持的元素及属性来自于servle
         <filter-name>login</filter-name>
         <url-pattern>/*</url-pattern>
       </filter-mapping>
+
+6.欢迎页面配置
+  welcome-file-list 用于指定web应用的欢迎文件列表
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>  
+    <welcome-file>index.htm</welcome-file> 
+    <welcome-file>index.jsp</welcome-file> 
+  </welcom-file-list>
+尝试请求的顺序，从上到下。
+
+7.错误页面配置
+  <error-page>
+      <error-code>500</error-code>
+      <location>500.html</location>
+  </error-page>
+ <error-page>
+      <error-code>404</error-code>
+      <location>404.html</location>
+  </error-page>
+ <error-page>
+      <exception-type>java.lang.Exception</exception-type>
+      <location>error.jsp</location>
+  </error-page>
