@@ -1,0 +1,15 @@
+Tomcat 提供的管理应用有 用于管理 Host 的host-manager 和 用于管理web应用的manager.
+
+1.host-manager
+  host-manager 默认添加了访问控制权限，当打开网页的时候，需要输入用户名和密码（conf/tomcat-users.xml中配置）。
+  1.1 admin-gui : 用于控制页面访问权限
+  1.2 admin-script : 用于控制以简体文本的形式进行访问
+  <role rolename="admin-gui"/>
+  <role rolename="admin-script"/>
+  <user username="admin" password="admin" roles="admin-gui,admin-script"/>
+  
+  
+2.manager
+添加用户管理配置 ： 
+  <role rolename="manager-gui"/>
+  <user username="admin" password="admin" roles="admin-gui,admin-script,manager-gui"/>
