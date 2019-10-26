@@ -6,7 +6,6 @@ JVM 的模型
       新生代 + 老年代 = （ 伊甸园区（Eden）+ 幸存区（From+To两个）） + 老年代
    
 
-
 1.JVM配置选项
   1.1 Windows平台 ： catalina.bat 
       set JAVA_OPTS=-server -Xms2048m -Xmx2048m -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=256m -XX:SurvivorRatio=8
