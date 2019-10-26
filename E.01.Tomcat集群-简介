@@ -1,0 +1,102 @@
+1.简介
+  由于单台Tomcat的承受能力是有限的，当我们的业务系统用户量比较大，请求压力比较大时，单台Tomcat是扛不住的，这个时候，就需要搭建
+  Tomcat的集群，而目前比较流行的做法就是通过Nginx来实现Tomcat集群的负载均衡。
+  
+  流程模型图 ： 
+     客户端 ---> 网络 --->   Nginx(反向代理服务器)  ----->  Tomcat server01
+                                                  ----->  Tomcat server02
+                                                   
+ 2.环境准备
+   2.1 准备两台Tomcat 
+       如何准备 ： 2.1.1  新建一个文件夹用于集群的创建 apache-tomcat-8.5.47-cluster(集群的意思)
+                  2.1.2  将Tomcat的文件夹解压一份，并重命名为 tomcat-8888
+                  2.1.3  将Tomcat的文件夹解压零一分，并重命名为 tomcat-9999
+                  
+    2.2 修改端口号
+         2.2.1 修改 tomcat-8888 的三个端口号
+               8009----8019
+               8080----8888
+               8005----8015
+         2.2.2 修改tomcat-9999 的三个端口号
+               8009----8029
+               8080----9999
+               8005----8025
+               
+    2.3 安装配置Nginx 
+        2.3.1 下载Nginx 压缩文件夹  nginx-1.8.1.zip
+        2.3.2 将压缩文件直接解压到  apache-tomcat-8.5.47-cluster 目录下即可
+        2.3.3 配置nginx.conf : 
+              upstream serverpool{
+                server localhost:8888;
+                server localhost:9999;
+              }
+              
+              server {
+                listen   99;  #监听的端口号 99
+                server_name localhost; # 服务的地址
+                 
+                #后端搜索服务
+                location / { # 拦截的映射就是根目录 
+                  proxy_pass http://serverpool/;
+                  # 反向代理的配置，代理的是  http://serverpool/；而serverpool 指的又是 上面声明的那个 serverpool
+                }
+              }
+              
+      2.4 修改tomcat的欢迎页面，用来区分具体访问的是那一台tomcat
+         就是简单修改一下index.jsp页面即可，能够区分出来
+         
+      2.5 启动两台tomcat 
+          localhost：8888
+          localhost : 9999
+      
+      2.6 启动nginx ,直接双击.exe 文件即可，一闪而过即可，然后可以看到服务中已经有了
+                     或者在cmd 中 执行命令 nginx.ext -s reload 这个是重新加载的命令
+      
+      2.7 访问nginx 
+          localhost:8080 # 这个是在nginx中的配置
+          到这里，就看到刚才配置的tomcat成功了。
+          
+  3.负载均衡的策略
+    3.1 轮询
+        最基本的配置方法，它是upstream 模块默认的负载均衡默认策略。每个请求会按时间顺序逐一分配到不同的后端服务器。
+         upstream serverpool{
+                server localhost:8888;
+                server localhost:9999;
+         }
+         就是上面两个轮着来。
+         参数说明 ： 
+             3.1.1 fail_timeout  : 与max_fails 结合使用
+             3.1.2 max_fails  : 设置在fail_timeout参数设置的时间内最大失败次数，如果在这个时间内，所有针对该服务器的请求都失败了，
+                                那么认为该服务器是停机了。
+             3.1.3 fail_time : 服务器被认为停机的时间长度，默认是10s。
+             3.1.4 backup : 标记该服务器为备用服务器。当主机服务器停止时，请求会被发送到它这里。
+             3.1.5 down : 标记服务器永久停机了。
+             
+               upstream serverpool{
+                server localhost:8888;
+                server localhost:9999 down; # 该服务器down机了
+               }
+         
+       3.2 weight 权重
+           权重方式，在轮询策略的基础上指定轮询的几率。
+             upstream serverpool{
+                server localhost:8888 weight=3;
+                server localhost:9999 weight=1; 
+              }
+              weight 参数用于指定轮询几率，weight的默认值为1；weight的数值与访问比率成正比，比如8888服务器上的服务被访问的几率为9999服务器的三倍。
+              此策略比较适合服务器的硬件配置差别比较大的情况。
+              
+        3.3 ip_hash
+            指定负载均衡器按照基于客户端IP 的分配方式，这个方法确保了相同的客户端的请求一致发送到相同的服务器，以保证session会话。
+            这样每个访客都固定访问一个后端服务器，可以解决session不能跨服务器的问题。
+             upstream serverpool{
+                ip_hash; // 直接这样写就可以
+                server localhost:8888 weight=3;
+                server localhost:9999 weight=1; 
+              }
+           
+         
+      
+      
+      
+        
