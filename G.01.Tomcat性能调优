@@ -1,0 +1,88 @@
+1.Tomcat 性能测试
+   对于系统性能，用户最直观的感受就是系统的加载时间和操作时间，即用户执行某项操作的耗时。从更为专业的角度上讲，性能测试可以从一下两个指标量化：
+       * 响应时间 ： 执行某个操作的耗时。大多数情况下，我们需要针对同一个操作测试多次，以获取操作的平均响应时间。
+       * 吞吐量 ： 即在给定的时间内，系统支持的事务数量，计算单位是TPS.
+   通常情况下，我们需要借助于一些自动化工具来进行性能测试，因为手动模拟大量用户的并发访问几乎是不可行的，
+   而且现在市面上也有很多的性能测试工具可以使用，比如 ：ApacheBeanch,ApacheJMeter,WCAT,WebPolygraph,LoadRunner.
+   
+   课程上主要介绍一款免费的工具 ： ApacheBeanch.
+   
+   1.1 ApacheBeanch 
+       ApacheBeanch(ab) 是一款ApacheServer基准的测试工具，用户测试Apache Server 的服务能力（每秒处理请求数），它不仅可以用于Apache的测试，
+       还可以用于测试Tomcat\Nginx\lighthttp\ITS等服务器。
+       
+       下面的演示在linux系统上进行操作 ： 
+        1.1.1 安装
+              # yum install httpd-tools
+        1.1.2 查看版本号
+              # ab -V(大写的V)
+        1.1.3 部署war包，准备环境
+              这一步都是常规操作。
+        1.1.4 性能测试
+              # ab -n 1000 -c 100 -p data.json -T applicatioin/json http://localhost:8080/course/search.do?page=1&pageSize=10
+              -n : 在测试会话中所执行的请求个数，默认只执行一次请求
+              -c : 一次产生的请求个数，默认一次一个
+              -p : 包含了需要POST 的数据文件
+              -t : 测试所进行的最大秒数，默认没有时间限制
+              -T : POST数据所需要使用的Content-Type 头信息
+              
+ 2.Tomcat 性能优化
+   2.1 JVM参数调优
+       Tomcat是一款Java应用，那么JVM的配置便与其运行性能密切相关，而JVM优化的重点则集中在 内存分配 和 GC策略 的调整上，因为内存会直接影响服务的
+       运行效率和吞吐量，JVM垃圾回收机制则会不同程度的导致程序运行中断。可以根据应用程序的特点，选择不同的垃圾回收策略，调整JVM 垃圾回收策略，可以
+       极大减少垃圾回收册数，提升垃圾回收效率，改善程序运行性能。
+       
+       2.1.1 JVM 内存参数
+             * -server             启动server，以服务端模式运行                服务端模式建议开启
+             * -Xms                最小内存堆                                 建议与Xmx设置相同
+             * -Xmx                最大内存堆                                 建议设置为可用内存的80% （可用内存值得是 服务器的 其他服务占用了之后剩下的可以使用的内存的805）
+             * -XX:MetaspaceSize   元空间初始值
+             * -XX：MaxMetaspaceSize 元空间最大值                              默认无限
+             * -XX:MaxNewSize      新生代最大内存                              默认16M
+             * -XX:NewRatio        新生代与老年代比值，默认为2                  不建议修改
+             * -XX:SurvivorRatio   伊甸园区与幸存区的大小比值 ，默认为8          不建议修改
+             
+           在Linux下如何配置 ： 修改 catalina.sh 
+           #free 命令可以查看当前服务器的空闲内存
+           可以根据结果计算出最大堆内存的设置值 ： -Xmx 
+           JAVA_OPTS="-server -Xms2048m -Xmx2048 -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m -XX:SurvivorRatio=8"
+           
+           #ps -ef | grep tomcat 拿到tomcat的PID 51421
+           #jmap -heap 51421 : 可以查看tomcat的占用情况
+           
+      2.2 GC 策略
+          JVM 垃圾回收性能有以下两个主要的指标 ：
+          * 吞吐量 ： 工作时间（排除GC时间）占总时间的百分比，工作时间并不仅仅是程序运行的时间，还包含了内存分配的时间。
+          * 暂停时间 ： 测试时间段内，由垃圾回收导致的应用程序停止响应次数的时间。
+          垃圾收集器的类型：
+              * 串行收集器（Serial Collector） : 采用单线程执行所有的垃圾回收工作，适用于单核CPU服务器，无法利用多和硬件的优势
+              * 并行收集器（Parallel Collector） ：又称为 吞吐量收集器，以并行的方式执行新生代的垃圾回收，该方式可以显著降低垃圾回收的开销
+                                                  （指多条垃圾收集线程并行工作，但此时用户线程仍然处于等待状态）。适用于多处理器或多线程硬件
+                                                  上运行的数据量较大的应用。
+              * 并发收集器（Concrrent Collector） : 以并发的方式执行大部分的垃圾回收工作，以缩短垃圾回收的暂停时间。只用于那些响应时间优先于吞吐量
+                                                   的应用，因为该收集器虽然最小化了暂停时间（指用户线程与垃圾收集线程同时执行，但不一定是并行的，
+                                                   可能会有交替进行），但是会降低应用程序的性能。
+              *CMS收集器（Concurrent Mark Sweep Collector）: 并发标记清除收集器，适用于那些更愿意缩短垃圾回收暂停时间并且负担的起与垃圾回收共享
+                                                             处理器资源的应用。
+              *G1收集器（Garbage-First Garbage Collector）: 适用于大容量内存的多核服务器，可以在满足垃圾回收暂停时间目标的同时，以最大可能性
+                                                            实现高吞吐量（JDK1.7 之后）。
+                                                            
+           不同的应用程序，对于垃圾回收会有不同的需求。JVM会根据运行的平台，服务器资源配置情况选择合适的垃圾收集器、堆内存大小及运行时编译器。
+           如果无法满足需求，参考以下准则 ：
+               1. 程序数据量较小，选择串行收集器。
+               2. 应用运行在单核处理器上且没有暂停时间要求，可交由JVM自行选择或选择串行收集器。
+               3. 如果考虑应用程序的峰值性能，没有暂停时间要求，可以选择并行收集器。
+               4. 如果应用程序的响应时间比整体吞吐量更重要，可以选择并发收集器。
+               
+           通过jconsole查看默认的（远程服务器上的）tomcat的垃圾收集器：
+           1. 修改catalina.sh中的JAVA_OPTS内容，在后面追加如下内容：
+              -Djava.rmi.server.hostname=192.167.1.10 
+              -Dcom.sun.management.jmxremote.port=8999 
+              -Dcom.sun.management.jmxremote.rmi.port=8999 
+              -Dcom.sun.management.jmxremote.ssl=false
+              -Dcom.sun.management.jmxremote.authenticate=false 
+           2. 找到windows下的jconsole 链接远程进程
+           
+           未完待续
+               
+        
