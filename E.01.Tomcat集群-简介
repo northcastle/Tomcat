@@ -95,7 +95,39 @@
                 server localhost:9999 weight=1; 
               }
            
-         
+           
+4.session共享方案
+  在Tomcat集群中，如果应用需要用户进行登陆，那么这个时候，用于tomcat做了负载均衡，则用户登陆并访问应用系统是，就会出现问题。
+  
+  解决上述问题，有如下解决方案 ：
+      4.1 ip_hash 策略
+          一个用户发起的请求，只会请求到tomcat1上进行操作，另一个用户发起的请求只在tomcat2上进行操作。那么这个时候，同一个用户发起的请求，都会通过
+          nginx的ip_hash策略，将请求转发到其中的一台Tomcat上。
+          
+      4.2 session 复制
+          4.2.1 创建一个session.jsp页面
+                <body>
+                    Tomcat - 9999:
+                     <br>
+                    sessionID : <%= session.getId()%>
+                    
+                    <%
+                      String username = session.getAttribute("username");
+                      if(username != null && !username.equals("")){
+                        out.println("username的值是 ： "+username);
+                      }else{
+                        session.setAttribute("username","whc");
+                        out.println("username没有值，并且设置完毕！ ");
+                      }
+                    %>
+                </body>
+           4.2.2 将这个工程打包，并且部署到两台tomcat上面
+           4.2.3 下面需要依赖于tomcat 的官方文档上面有讲这个集群的内容
+                 4.2.3.1 修改server.xml 配置文件
+                          将 Engine 下的 Cluster 标签放开 ： <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster"/>
+                  4.2.3.2 在当前应用下的 web.xml 中添加 一个标签
+                          <distributable/>
+            【注】 session 复制的方法只能在小型的项目中使用。集群的数量比较多的时候，就不推荐使用这种方法。
       
       
       
